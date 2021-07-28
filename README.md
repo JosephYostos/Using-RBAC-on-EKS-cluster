@@ -211,3 +211,6 @@ data:
 kubectl apply -f aws-auth.yaml
 rm aws-auth.yaml
 ```
+
+
+#### Referance: https://www.eksworkshop.com/beginner/090_rbac/intro/
