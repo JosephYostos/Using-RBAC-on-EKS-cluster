@@ -153,5 +153,33 @@ kubectl apply -f rbacuser-role.yaml
 kubectl apply -f rbacuser-role-binding.yaml
 ```
 
+##Verify the role and Binding
+
+1- Issue the following command that sources the Peter env vars, and verifies they’ve taken:
+
+```bash
+. Peter_creds.sh; aws sts get-caller-identity
+```
+
+2- As Peter, issue the following to get pods in the test namespace:
+
+```bash
+kubectl get pods -n test
+```
+
+Output should be similar to 
+
+```bash
+NAME                    READY     STATUS    RESTARTS   AGE
+nginx-55bd7c9fd-kmbkf   1/1       Running   0          23h
+```
+
+If you try any other namespace you should get error similar to the following:
+
+```bash
+No resources found.
+Error from server (Forbidden): pods is forbidden: User "rbac-user" cannot list resource "pods" in API group "" in the namespace "kube-system"
+```
+
 
 
