@@ -182,4 +182,32 @@ Error from server (Forbidden): pods is forbidden: User "rbac-user" cannot list r
 ```
 
 
+## Cleanup
 
+- you can cleanup the files and resources you created by issuing the following commands
+
+```bash
+unset AWS_SECRET_ACCESS_KEY
+unset AWS_ACCESS_KEY_ID
+kubectl delete namespace test
+rm Peter_creds.sh
+rm Peter-role.yaml
+rm Peter-role-binding.yaml
+aws iam delete-access-key --user-name=Peter --access-key-id=$(jq -r .AccessKey.AccessKeyId /tmp/create_output.json)
+aws iam delete-user --user-name Peter
+rm /tmp/Peter_output.json
+```
+- Next remove the rbac-user mapping from the existing configMap by editing the existing aws-auth.yaml file:
+
+```bash
+data:
+  mapUsers: |
+    []
+```
+
+- And apply the ConfigMap and delete the aws-auth.yaml file
+
+```bash
+kubectl apply -f aws-auth.yaml
+rm aws-auth.yaml
+```
