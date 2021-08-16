@@ -81,6 +81,7 @@ kubectl apply -f aws-auth.yaml
 ```bash
 . Peter_creds.sh
 ```
+NOTE: for mac users you may need to use "source Peter_credssh" instead.
 
 2- By running the above command, you’ve now set AWS environmental variables which should override the default admin user or role. To verify we’ve overrode the default user settings, run the following command:
 
