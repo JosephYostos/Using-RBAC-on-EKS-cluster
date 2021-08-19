@@ -3,11 +3,11 @@
 ## Create an IAM user
 
 
-1- create a new user called Peter, and generate/save credentials for it:
+1- create a new user called David, and generate/save credentials for it:
 
 ```bash
-    aws iam create-user --user-name Peter
-    aws iam create-access-key --user-name Peter | tee /tmp/Peter_output.json
+    aws iam create-user --user-name David
+    aws iam create-access-key --user-name David | tee /tmp/David_output.json
 ```
 
 By running the previous step, you should get a response similar to:
@@ -15,7 +15,7 @@ By running the previous step, you should get a response similar to:
 ```bash
 {
     "AccessKey": {
-        "UserName": "Peter",
+        "UserName": "David",
         "Status": "Active",
         "CreateDate": "2021-07-28T15:37:27Z",
         "SecretAccessKey": < AWS Secret Access Key > ,
@@ -24,12 +24,12 @@ By running the previous step, you should get a response similar to:
 }
 ```
 
-2- To make it easy to switch back and forth between the admin user you created the cluster with, and this new user (Peter), run the following command to create a script that when sourced, sets the active user to be Peter:
+2- To make it easy to switch back and forth between the admin user you created the cluster with, and this new user (David), run the following command to create a script that when sourced, sets the active user to be David:
 
 ```bash
-cat << EoF > Peter_creds.sh
-export AWS_SECRET_ACCESS_KEY=$(jq -r .AccessKey.SecretAccessKey /tmp/Peter_output.json)
-export AWS_ACCESS_KEY_ID=$(jq -r .AccessKey.AccessKeyId /tmp/Peter_output.json)
+cat << EoF > David_creds.sh
+export AWS_SECRET_ACCESS_KEY=$(jq -r .AccessKey.SecretAccessKey /tmp/David_output.json)
+export AWS_ACCESS_KEY_ID=$(jq -r .AccessKey.AccessKeyId /tmp/David_output.json)
 EoF
 ```
 
@@ -40,18 +40,18 @@ EoF
 ```bash
 kubectl get configmap -n kube-system aws-auth -o yaml | grep -v "creationTimestamp\|resourceVersion\|selfLink\|uid" | sed '/^  annotations:/,+2 d' > aws-auth.yaml
 ```
-2- append peter user mapping to the existing configMap
+2- append David user mapping to the existing configMap
 
 ```bash
 cat << EoF >> aws-auth.yaml
 data:
   mapUsers: |
-    - userarn: arn:aws:iam::${ACCOUNT_ID}:user/Peter
-      username: Peter
+    - userarn: arn:aws:iam::${ACCOUNT_ID}:user/David
+      username: David
 EoF
 ```
 
-Note: to get the account ID login to IAM, click users, select the user peter and copy the User ARN from there.
+Note: to get the account ID login to IAM, click users, select the user David and copy the User ARN from there.
 
 To verify everything populated and was created correctly, cat aws-auth.yaml and the output should be similar to the following:
 
@@ -63,8 +63,8 @@ metadata:
   namespace: kube-system
 data:
   mapUsers: |
-    - userarn: arn:aws:iam::123456789:user/Peter
-      username: Peter
+    - userarn: arn:aws:iam::123456789:user/David
+      username: David
 ```
 
 3- apply the ConfigMap to apply this mapping to the system:
@@ -76,12 +76,12 @@ kubectl apply -f aws-auth.yaml
 
 ## Test the new user
 
-1- Issue the following command to source the Peter's AWS IAM user environmental variables:
+1- Issue the following command to source the David's AWS IAM user environmental variables:
 
 ```bash
-. Peter_creds.sh
+. David_creds.sh
 ```
-NOTE: for mac users you may need to use "source Peter_credssh" instead.
+NOTE: for mac users you may need to use "source David_credssh" instead.
 
 2- By running the above command, you’ve now set AWS environmental variables which should override the default admin user or role. To verify we’ve overrode the default user settings, run the following command:
 
@@ -95,11 +95,11 @@ output should be similar to:
 {
     "Account": <AWS Account ID>,
     "UserId": <AWS User ID>,
-    "Arn": "arn:aws:iam::<AWS Account ID>:user/Peter"
+    "Arn": "arn:aws:iam::<AWS Account ID>:user/David"
 }
 ```
 
-3- Run the following to unset the environmental variables that define us as Peter:
+3- Run the following to unset the environmental variables that define us as David:
 
 ```bash
 unset AWS_SECRET_ACCESS_KEY
@@ -111,7 +111,7 @@ unset AWS_ACCESS_KEY_ID
 1- we’ll create a role called pod-reader that provides list, get, and watch access for pods and deployments, but only for the test namespace. Run the following to create this role:
 
 ```bash
-cat << EoF > Peter-role.yaml
+cat << EoF > David-role.yaml
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -130,7 +130,7 @@ EoF
 2- create rolebinding
 
 ```bash
-cat << EoF > Peter-role-binding.yaml
+cat << EoF > David-role-binding.yaml
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -138,7 +138,7 @@ metadata:
   namespace: test
 subjects:
 - kind: User
-  name: Peter
+  name: David
   apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: Role
@@ -156,13 +156,13 @@ kubectl apply -f rbacuser-role-binding.yaml
 
 ##Verify the role and Binding
 
-1- Issue the following command that sources the Peter env vars, and verifies they’ve taken:
+1- Issue the following command that sources the David env vars, and verifies they’ve taken:
 
 ```bash
-. Peter_creds.sh; aws sts get-caller-identity
+. David_creds.sh; aws sts get-caller-identity
 ```
 
-2- As Peter, issue the following to get pods in the test namespace:
+2- As David, issue the following to get pods in the test namespace:
 
 ```bash
 kubectl get pods -n test
@@ -191,12 +191,12 @@ Error from server (Forbidden): pods is forbidden: User "rbac-user" cannot list r
 unset AWS_SECRET_ACCESS_KEY
 unset AWS_ACCESS_KEY_ID
 kubectl delete namespace test
-rm Peter_creds.sh
-rm Peter-role.yaml
-rm Peter-role-binding.yaml
-aws iam delete-access-key --user-name=Peter --access-key-id=$(jq -r .AccessKey.AccessKeyId /tmp/create_output.json)
-aws iam delete-user --user-name Peter
-rm /tmp/Peter_output.json
+rm David_creds.sh
+rm David-role.yaml
+rm David-role-binding.yaml
+aws iam delete-access-key --user-name=David --access-key-id=$(jq -r .AccessKey.AccessKeyId /tmp/create_output.json)
+aws iam delete-user --user-name David
+rm /tmp/David_output.json
 ```
 - Next remove the rbac-user mapping from the existing configMap by editing the existing aws-auth.yaml file:
 
